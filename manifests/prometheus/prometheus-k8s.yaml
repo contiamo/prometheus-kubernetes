@@ -20,6 +20,9 @@ spec:
   serviceMonitorSelector:
     matchExpressions:
     - {key: k8s-app, operator: Exists}
+  serviceMonitorNamespaceSelector:
+    matchExpressions:
+    - {key: prometheus-monitoring, operator: In, values: ["enabled"]}
   ruleSelector:
     matchLabels:
       role: prometheus-rulefiles
