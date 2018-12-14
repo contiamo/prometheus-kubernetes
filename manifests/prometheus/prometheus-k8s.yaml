@@ -23,6 +23,9 @@ spec:
   serviceMonitorNamespaceSelector:
     matchExpressions:
     - {key: prometheus-monitoring, operator: In, values: ["enabled"]}
+  ruleNamespaceSelector:
+    matchExpressions:
+    - {key: prometheus-monitoring, operator: In, values: ["enabled"]}
   ruleSelector:
     matchLabels:
       role: alert-rules
