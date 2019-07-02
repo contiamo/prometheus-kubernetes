@@ -135,7 +135,7 @@ done
 ###########################################################################################
 #set components version
 ###########################################################################################
-echo -e "${ORANGE}Setting components version"
+echo -e "${ORANGE}Setting component versions"
 tput sgr0
 
 #Prometheus Operator
@@ -324,6 +324,30 @@ if [[ $use_slack =~ ^([yY][eE][sS]|[yY])$ ]]; then
   sed -i -e 's/your_slack_channel/'"$slack_channel"'/g' assets/alertmanager/alertmanager.yaml
 fi
 
+# Google OAuth?:
+echo
+echo -e "${BLUE}Do you want to set up Google OAuth for Grafana?"
+tput sgr0
+read -p "Y/N [N]: " use_googleauth_grafana
+
+#if so, fill in this form...
+if [[ $use_googleauth_grafana =~ ^([yY][eE][sS]|[yY])$ ]]; then
+  echo -e "${ORANGE}Go here to setup Google OAuth: https://console.developers.google.com/apis/credentials"
+  echo -e "${ORANGE}Grafana docs for the topic: https://grafana.com/docs/auth/google"
+
+  read -p "Google OAuth Client ID: " google_oauth_client_id
+  read -p "Google OAuth Client Secret: " google_oauth_client_secret
+  read -p "Google OAuth Allowed domains: " google_oauth_allowed_domains
+  read -p "Grafana domain (not URL): " grafana_domain
+
+  sed -i -e 's,CLIENT_ID_PLACEHOLDER,'"$google_oauth_client_id"',g' assets/grafana/grafana.ini
+  sed -i -e 's,CLIENT_SECRET_PLACEHOLDER,'"$google_oauth_client_secret"',g' assets/grafana/grafana.ini
+  sed -i -e 's,ALLOWED_DOMAINS_PLACEHOLDER,'"$google_oauth_allowed_domains"',g' assets/grafana/grafana.ini 
+  sed -i -e 's,DOMAIN_PLACEHOLDER,'"$grafana_domain"',g' assets/grafana/grafana.ini 
+  kctl create secret generic -n monitoring grafana-config --from-file=assets/grafana/grafana.ini 
+fi
+exit 0
+######################################################################################################
 echo
 echo -e "${BLUE}Removing all the sed generated files"
 find . -name "*.yaml-e" -exec rm -rf {} \;
