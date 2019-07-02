@@ -216,6 +216,8 @@ if [[ $use_dedicated_nodes =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
   sed -i -e 's,node_label_key,'"$NODE_LABEL_KEY"',g' manifests/grafana/grafana.de.yaml
   sed -i -e 's,node_label_value,'"$NODE_LABEL_VALUE"',g' manifests/grafana/grafana.de.yaml
+  sed -i -e 's,node_label_key,'"$NODE_LABEL_KEY"',g' manifests/grafana/grafana.de-with-googleauth.yaml
+  sed -i -e 's,node_label_value,'"$NODE_LABEL_VALUE"',g' manifests/grafana/grafana.de-with-googleauth.yaml
 
   sed -i -e 's,node_label_key,'"$NODE_LABEL_KEY"',g' manifests/kube-state-metrics/kube-state-metrics.de.yaml
   sed -i -e 's,node_label_value,'"$NODE_LABEL_VALUE"',g' manifests/kube-state-metrics/kube-state-metrics.de.yaml
@@ -229,6 +231,7 @@ else
   sed -i -e '/node_label_key/d' manifests/alertmanager/alertmanager.yaml
   sed -i -e '/nodeSelector:/d' manifests/alertmanager/alertmanager.yaml
   sed -i -e '/node_label_key/d' manifests/grafana/grafana.de.yaml
+  sed -i -e '/node_label_key/d' manifests/grafana/grafana.de-with-googleauth.yaml
   sed -i -e '/node_label_key/d' manifests/kube-state-metrics/kube-state-metrics.de.yaml
   sed -i -e '/node_label_key/d' manifests/prometheus/prometheus-k8s.yaml
   sed -i -e '/nodeSelector:/d' manifests/prometheus/prometheus-k8s.yaml
@@ -252,6 +255,7 @@ sed -i -e 's/PROMETHEUS_MEMORY_REQUEST/'"$PROMETHEUS_MEMORY_REQUEST"'/g' manifes
 
 #set grafana version
 sed -i -e 's/GRAFANA_VERSION/'"$GRAFANA_VERSION"'/g' manifests/grafana/grafana.de.yaml
+sed -i -e 's/GRAFANA_VERSION/'"$GRAFANA_VERSION"'/g' manifests/grafana/grafana.de-with-googleauth.yaml
 
 #set alertmanager version
 sed -i -e 's/ALERTMANAGER_VERSION/'"$ALERTMANAGER_VERSION"'/g' manifests/alertmanager/alertmanager.yaml
@@ -332,6 +336,7 @@ read -p "Y/N [N]: " use_googleauth_grafana
 
 #if so, fill in this form...
 if [[ $use_googleauth_grafana =~ ^([yY][eE][sS]|[yY])$ ]]; then
+GOOGLE_AUTH='yes'
   echo -e "${ORANGE}Go here to setup Google OAuth: https://console.developers.google.com/apis/credentials"
   echo -e "${ORANGE}Grafana docs for the topic: https://grafana.com/docs/auth/google"
 
@@ -398,7 +403,12 @@ echo
 echo -e "${ORANGE}Deploying Grafana"
 tput sgr0
 
-kctl apply -f manifests/grafana
+if [[ ${GOOGLE_AUTH} == "yes" ]]; then
+  for i in $(ls manifests/grafana/ | grep -v grafana.de.yaml); do kctl apply -f manifests/grafana/$i; done
+else 
+  for i in $(ls manifests/grafana/ | grep -v grafana.de-with-googleauth.yaml); do kctl apply -f manifests/grafana/$i; done
+#kctl apply -f manifests/grafana
+fi 
 
 echo
 echo -e "${ORANGE}Grafana default credentials"

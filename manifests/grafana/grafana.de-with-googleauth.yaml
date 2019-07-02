@@ -17,6 +17,9 @@ spec:
       containers:
       - image: grafana/grafana:GRAFANA_VERSION
         name: grafana
+        env:
+        - name: GF_PATHS_CONFIG
+          value: /custom-config/grafana.ini
         ports:
         - containerPort: 3000
           name: http
@@ -28,6 +31,8 @@ spec:
             cpu: 100m
             memory: 100Mi
         volumeMounts:
+        - mountPath: /custom-config
+          name: grafana-config
         - mountPath: /var/lib/grafana
           subPath: grafana
           name: grafana-storage
@@ -113,4 +118,7 @@ spec:
       - configMap:
           name: grafana-dashboard-k8s-cluster-usage
         name: grafana-dashboard-k8s-cluster-usage
-
+      - name: grafana-config
+        secret:
+          defaultMode: 420
+          secretName: grafana-config
