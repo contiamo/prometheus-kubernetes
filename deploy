@@ -360,7 +360,8 @@ tput sgr0
 ######################################################################################################
 #deploy all the components
 ######################################################################################################
-
+# Preparing acccess to kubelet
+kubectl create clusterrolebinding kube-state-metrics-admin --clusterrole=cluster-admin --serviceaccount=${NAMESPACE}:kube-state-metrics
 #prometheus-operator
 echo
 echo -e "${ORANGE}Deploying Prometheus Operator"
