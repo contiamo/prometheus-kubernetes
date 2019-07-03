@@ -342,7 +342,7 @@ GOOGLE_AUTH='yes'
 
   read -p "Google OAuth Client ID: " google_oauth_client_id
   read -p "Google OAuth Client Secret: " google_oauth_client_secret
-  read -p "Google OAuth Allowed domains: " google_oauth_allowed_domains
+  read -p "Allowed domains (Google email address domains to be allowed to login. Probably 'contiamo.com'): " google_oauth_allowed_domains
   read -p "Grafana domain (not URL): " grafana_domain
 
   sed -i -e 's,CLIENT_ID_PLACEHOLDER,'"$google_oauth_client_id"',g' assets/grafana/grafana.ini
@@ -351,11 +351,11 @@ GOOGLE_AUTH='yes'
   sed -i -e 's,DOMAIN_PLACEHOLDER,'"$grafana_domain"',g' assets/grafana/grafana.ini 
   kctl create secret generic -n monitoring grafana-config --from-file=assets/grafana/grafana.ini 
 fi
-exit 0
 ######################################################################################################
 echo
 echo -e "${BLUE}Removing all the sed generated files"
 find . -name "*.yaml-e" -exec rm -rf {} \;
+find . -name "*.ini-e" -exec rm -rf {} \;
 tput sgr0
 ######################################################################################################
 #deploy all the components
