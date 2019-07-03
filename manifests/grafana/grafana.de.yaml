@@ -68,6 +68,9 @@ spec:
         - mountPath: /grafana-dashboard-definitions/0/k8s-cluster-usage
           name: grafana-dashboard-k8s-cluster-usage
           readOnly: false
+        - mountPath: /grafana-dashboard-definitions/0/grafana-nginx
+          name: grafana-nginx
+          readOnly: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
@@ -113,4 +116,6 @@ spec:
       - configMap:
           name: grafana-dashboard-k8s-cluster-usage
         name: grafana-dashboard-k8s-cluster-usage
-
+      - configMap:
+          name: grafana-nginx
+        name: grafana-nginx
