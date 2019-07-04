@@ -448,3 +448,18 @@ git checkout -- .
 echo
 echo -e "${GREEN}Done"
 tput sgr0
+
+######### Installing Loki ########
+# Loki?:
+echo
+echo -e "${BLUE}Shall we install Loki?"
+tput sgr0
+read -p "Y/N [Y]: " install_loki
+
+#if so, fill in this form...
+if [[ $install_loki != "N" ]] && [[ $install_loki != "n" ]]; then
+  LOKI='yes'
+  echo helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}
+  helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}
+fi
+echo -e "${GREEN}All done."
