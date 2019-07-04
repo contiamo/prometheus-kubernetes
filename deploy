@@ -336,7 +336,6 @@ read -p "Y/N [N]: " use_googleauth_grafana
 
 #if so, fill in this form...
 if [[ $use_googleauth_grafana =~ ^([yY][eE][sS]|[yY])$ ]]; then
-GOOGLE_AUTH='yes'
   echo -e "${ORANGE}Go here to setup Google OAuth: https://console.developers.google.com/apis/credentials"
   echo -e "${ORANGE}Grafana docs for the topic: https://grafana.com/docs/auth/google"
 
@@ -345,11 +344,16 @@ GOOGLE_AUTH='yes'
   read -p "Allowed domains (Google email address domains to be allowed to login. Probably 'contiamo.com'): " google_oauth_allowed_domains
   read -p "Grafana domain (not URL): " grafana_domain
 
+  GOOGLE_AUTH='yes'
+
   sed -i -e 's,CLIENT_ID_PLACEHOLDER,'"$google_oauth_client_id"',g' assets/grafana/grafana.ini
   sed -i -e 's,CLIENT_SECRET_PLACEHOLDER,'"$google_oauth_client_secret"',g' assets/grafana/grafana.ini
   sed -i -e 's,ALLOWED_DOMAINS_PLACEHOLDER,'"$google_oauth_allowed_domains"',g' assets/grafana/grafana.ini 
   sed -i -e 's,DOMAIN_PLACEHOLDER,'"$grafana_domain"',g' assets/grafana/grafana.ini 
-  kctl create secret generic -n monitoring grafana-config --from-file=assets/grafana/grafana.ini 
+  kctl create secret generic -n ${NAMESPACE} grafana-config --from-file=assets/grafana/grafana.ini
+
+else
+  GOOGLE_AUTH='no'
 fi
 ######################################################################################################
 echo
@@ -406,10 +410,10 @@ tput sgr0
 
 if [[ ${GOOGLE_AUTH} == "yes" ]]; then
   for i in $(ls manifests/grafana/ | grep -v grafana.de.yaml); do kctl apply -f manifests/grafana/$i; done
-else 
+else
   for i in $(ls manifests/grafana/ | grep -v grafana.de-with-googleauth.yaml); do kctl apply -f manifests/grafana/$i; done
 #kctl apply -f manifests/grafana
-fi 
+fi
 
 echo
 echo -e "${ORANGE}Grafana default credentials"
@@ -462,4 +466,34 @@ if [[ $install_loki != "N" ]] && [[ $install_loki != "n" ]]; then
   echo helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}
   helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}
 fi
+
+
+######### Monitoring Ingresses with Google Auth ##########
+echo
+echo -e "${BLUE}Shall we install Monitoring ingresses with Google OAuth enabled?"
+tput sgr0
+read -p "Y/N [Y]: " install_ingresses
+
+#if so, fill in this form...
+if [[ $install_ingresses == "N" ]] || [[ $install_ingresses == "n" ]]; then
+  echo -e "${GREEN}All done."
+  exit 0
+fi
+
+if [[ GOOGLE_AUTH != "yes" ]]; then
+  echo -e "${ORANGE}Go here to setup Google OAuth: https://console.developers.google.com/apis/credentials"
+  echo -e "${ORANGE}Grafana docs for the topic: https://grafana.com/docs/auth/google"
+
+  read -p "Google OAuth Client ID: " google_oauth_client_id
+  read -p "Google OAuth Client Secret: " google_oauth_client_secret
+fi
+
+kctl create secret generic -n ${NAMESPACE} google-oauth --from-literal=client_id=${google_oauth_client_id} --from-literal=client_secret=${google_oauth_client_secret} --from-literal=cookiesecret=$(python -c 'import os,base64; print base64.b64encode(os.urandom(16))')
+kctl apply -f assets/oauth-proxy/oauth2-proxy.yaml
+
+read -p " What Contiamo ENV. are we on [dev/stg/prod]? " contiamo_env
+kctl apply -f assets/contiamo_${contiamo_env}
+
+##############################################################
 echo -e "${GREEN}All done."
+
