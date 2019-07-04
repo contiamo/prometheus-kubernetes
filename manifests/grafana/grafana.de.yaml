@@ -71,6 +71,18 @@ spec:
         - mountPath: /grafana-dashboard-definitions/0/grafana-nginx
           name: grafana-nginx
           readOnly: false
+        - mountPath: /grafana-dashboard-definitions/0/grafana-dashboard-idp
+          name: grafana-dashboard-idp
+          readOnly: false
+        - mountPath: /grafana-dashboard-definitions/0/grafana-dashboard-pantheon
+          name: grafana-dashboard-pantheon
+          readOnly: false
+        - mountPath: /grafana-dashboard-definitions/0/grafana-dashboard-go-processes
+          name: grafana-dashboard-go-processes
+          readOnly: false
+        - mountPath: /grafana-dashboard-definitions/0/grafana-datastore-queue
+          name: grafana-datastore-queue
+          readOnly: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
@@ -119,3 +131,16 @@ spec:
       - configMap:
           name: grafana-nginx
         name: grafana-nginx
+      - configMap:
+          name: grafana-dashboard-idp
+        name: grafana-dashboard-idp
+      - configMap:
+          name: grafana-dashboard-pantheon
+        name: grafana-dashboard-pantheon
+      - configMap:
+          name: grafana-dashboard-go-processes
+        name: grafana-dashboard-go-processes
+      - configMap:
+          name: grafana-datastore-queue
+        name: grafana-datastore-queue
+
