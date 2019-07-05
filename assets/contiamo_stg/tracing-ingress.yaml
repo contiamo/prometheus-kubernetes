@@ -1,0 +1,42 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+  labels:
+    app: tracing-jaeger
+    app.kubernetes.io/instance: tracing
+  name: tracing-jaeger
+  namespace: monitoring
+spec:
+  rules:
+  - host: tracing.stg.contiamo.io
+    http:
+      paths:
+      - backend:
+          serviceName: tracing-jaeger-query
+          servicePort: 80
+        path: /
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: tracing.stg.contiamo.io-oauth2-proxy
+  namespace: monitoring
+spec:
+  rules:
+  - host: tracing.stg.contiamo.io
+    http:
+      paths:
+      - backend:
+          serviceName: oauth2-proxy
+          servicePort: 4180
+        path: /oauth2
+  tls:
+  - hosts:
+    - tracing.stg.contiamo.io
+    secretName: stg.contiamo.io-tls-letsencrypt-prod

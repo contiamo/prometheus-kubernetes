@@ -3,15 +3,15 @@
 #########################################################################################
 #components default version
 #########################################################################################
-GRAFANA_DEFAULT_VERSION=5.2.2
-PROMETHEUS_DEFAULT_VERSION=v2.3.2
-PROMETHEUS_OPERATOR_DEFAULT_VERSION=v0.23.1
+GRAFANA_DEFAULT_VERSION=6.0.2
+PROMETHEUS_DEFAULT_VERSION=v2.8.1
+PROMETHEUS_OPERATOR_DEFAULT_VERSION=v0.29.0
 PROMETHEUS_STORAGE_DEFAULT_RETENTION=168h
 PROMETHEUS_STORAGE_DEFAULT_VOLUME_SIZE=40Gi
 PROMETHEUS_DEFAULT_MEMORY_REQUEST=1Gi
-ALERTMANAGER_DEFAULT_VERSION=v0.15.1
-NODE_EXPORTER_DEFAULT_VERSION=v0.16.0
-KUBE_STATE_METRICS_DEFAULT_VERSION=v1.3.1
+ALERTMANAGER_DEFAULT_VERSION=v0.16.1
+NODE_EXPORTER_DEFAULT_VERSION=v0.17.0
+KUBE_STATE_METRICS_DEFAULT_VERSION=v1.5.0
 NODE_LABEL_DEFAULT_KEY=beta.kubernetes.io/monit
 NODE_LABEL_DEFAULT_VALUE=prometheus
 DEFAULT_NAMESPACE=monitoring
@@ -102,6 +102,7 @@ do
             fi
             sed -i -e 's,STORAGE_CLASS_PROVISIONER,'"$STORAGE_CLASS_PROVISIONER"',g' manifests/prometheus/prometheus-k8s.yaml;
             sed -i -e 's,STORAGE_CLASS_TYPE,'"$STORAGE_CLASS_TYPE"',g' manifests/prometheus/prometheus-k8s.yaml;
+            sed -i -e 's,STORAGE_CLASS_TYPE,'"$STORAGE_CLASS_TYPE"',g' manifests/grafana/grafana.pvc.yaml;
             break
             ;;
         "Azure")
@@ -134,7 +135,7 @@ done
 ###########################################################################################
 #set components version
 ###########################################################################################
-echo -e "${ORANGE}Setting components version"
+echo -e "${ORANGE}Setting component versions"
 tput sgr0
 
 #Prometheus Operator
@@ -215,6 +216,8 @@ if [[ $use_dedicated_nodes =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
   sed -i -e 's,node_label_key,'"$NODE_LABEL_KEY"',g' manifests/grafana/grafana.de.yaml
   sed -i -e 's,node_label_value,'"$NODE_LABEL_VALUE"',g' manifests/grafana/grafana.de.yaml
+  sed -i -e 's,node_label_key,'"$NODE_LABEL_KEY"',g' manifests/grafana/grafana.de-with-googleauth.yaml
+  sed -i -e 's,node_label_value,'"$NODE_LABEL_VALUE"',g' manifests/grafana/grafana.de-with-googleauth.yaml
 
   sed -i -e 's,node_label_key,'"$NODE_LABEL_KEY"',g' manifests/kube-state-metrics/kube-state-metrics.de.yaml
   sed -i -e 's,node_label_value,'"$NODE_LABEL_VALUE"',g' manifests/kube-state-metrics/kube-state-metrics.de.yaml
@@ -228,6 +231,7 @@ else
   sed -i -e '/node_label_key/d' manifests/alertmanager/alertmanager.yaml
   sed -i -e '/nodeSelector:/d' manifests/alertmanager/alertmanager.yaml
   sed -i -e '/node_label_key/d' manifests/grafana/grafana.de.yaml
+  sed -i -e '/node_label_key/d' manifests/grafana/grafana.de-with-googleauth.yaml
   sed -i -e '/node_label_key/d' manifests/kube-state-metrics/kube-state-metrics.de.yaml
   sed -i -e '/node_label_key/d' manifests/prometheus/prometheus-k8s.yaml
   sed -i -e '/nodeSelector:/d' manifests/prometheus/prometheus-k8s.yaml
@@ -251,6 +255,7 @@ sed -i -e 's/PROMETHEUS_MEMORY_REQUEST/'"$PROMETHEUS_MEMORY_REQUEST"'/g' manifes
 
 #set grafana version
 sed -i -e 's/GRAFANA_VERSION/'"$GRAFANA_VERSION"'/g' manifests/grafana/grafana.de.yaml
+sed -i -e 's/GRAFANA_VERSION/'"$GRAFANA_VERSION"'/g' manifests/grafana/grafana.de-with-googleauth.yaml
 
 #set alertmanager version
 sed -i -e 's/ALERTMANAGER_VERSION/'"$ALERTMANAGER_VERSION"'/g' manifests/alertmanager/alertmanager.yaml
@@ -323,14 +328,44 @@ if [[ $use_slack =~ ^([yY][eE][sS]|[yY])$ ]]; then
   sed -i -e 's/your_slack_channel/'"$slack_channel"'/g' assets/alertmanager/alertmanager.yaml
 fi
 
+# Google OAuth?:
+echo
+echo -e "${BLUE}Do you want to set up Google OAuth for Grafana?"
+tput sgr0
+read -p "Y/N [N]: " use_googleauth_grafana
+
+#if so, fill in this form...
+if [[ $use_googleauth_grafana =~ ^([yY][eE][sS]|[yY])$ ]]; then
+  echo -e "${ORANGE}Go here to setup Google OAuth: https://console.developers.google.com/apis/credentials"
+  echo -e "${ORANGE}Grafana docs for the topic: https://grafana.com/docs/auth/google"
+
+  read -p "Google OAuth Client ID: " google_oauth_client_id
+  read -p "Google OAuth Client Secret: " google_oauth_client_secret
+  read -p "Allowed domains (Google email address domains to be allowed to login. Probably 'contiamo.com'): " google_oauth_allowed_domains
+  read -p "Grafana domain (not URL): " grafana_domain
+
+  GOOGLE_AUTH='yes'
+
+  sed -i -e 's,CLIENT_ID_PLACEHOLDER,'"$google_oauth_client_id"',g' assets/grafana/grafana.ini
+  sed -i -e 's,CLIENT_SECRET_PLACEHOLDER,'"$google_oauth_client_secret"',g' assets/grafana/grafana.ini
+  sed -i -e 's,ALLOWED_DOMAINS_PLACEHOLDER,'"$google_oauth_allowed_domains"',g' assets/grafana/grafana.ini 
+  sed -i -e 's,DOMAIN_PLACEHOLDER,'"$grafana_domain"',g' assets/grafana/grafana.ini 
+  kctl create secret generic -n ${NAMESPACE} grafana-config --from-file=assets/grafana/grafana.ini
+
+else
+  GOOGLE_AUTH='no'
+fi
+######################################################################################################
 echo
 echo -e "${BLUE}Removing all the sed generated files"
 find . -name "*.yaml-e" -exec rm -rf {} \;
+find . -name "*.ini-e" -exec rm -rf {} \;
 tput sgr0
 ######################################################################################################
 #deploy all the components
 ######################################################################################################
-
+# Preparing acccess to kubelet
+kubectl create clusterrolebinding kube-state-metrics-admin --clusterrole=cluster-admin --serviceaccount=${NAMESPACE}:kube-state-metrics
 #prometheus-operator
 echo
 echo -e "${ORANGE}Deploying Prometheus Operator"
@@ -373,7 +408,12 @@ echo
 echo -e "${ORANGE}Deploying Grafana"
 tput sgr0
 
-kctl apply -f manifests/grafana
+if [[ ${GOOGLE_AUTH} == "yes" ]]; then
+  for i in $(ls manifests/grafana/ | grep -v grafana.de.yaml); do kctl apply -f manifests/grafana/$i; done
+else
+  for i in $(ls manifests/grafana/ | grep -v grafana.de-with-googleauth.yaml); do kctl apply -f manifests/grafana/$i; done
+#kctl apply -f manifests/grafana
+fi
 
 echo
 echo -e "${ORANGE}Grafana default credentials"
@@ -412,3 +452,48 @@ git checkout -- .
 echo
 echo -e "${GREEN}Done"
 tput sgr0
+
+######### Installing Loki ########
+# Loki?:
+echo
+echo -e "${BLUE}Shall we install Loki?"
+tput sgr0
+read -p "Y/N [Y]: " install_loki
+
+#if so, fill in this form...
+if [[ $install_loki != "N" ]] && [[ $install_loki != "n" ]]; then
+  LOKI='yes'
+  echo helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}
+  helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}
+fi
+
+
+######### Monitoring Ingresses with Google Auth ##########
+echo
+echo -e "${BLUE}Shall we install Monitoring ingresses with Google OAuth enabled?"
+tput sgr0
+read -p "Y/N [Y]: " install_ingresses
+
+#if so, fill in this form...
+if [[ $install_ingresses == "N" ]] || [[ $install_ingresses == "n" ]]; then
+  echo -e "${GREEN}All done."
+  exit 0
+fi
+
+if [[ ${GOOGLE_AUTH} != "yes" ]]; then
+  echo -e "${ORANGE}Go here to setup Google OAuth: https://console.developers.google.com/apis/credentials"
+  echo -e "${ORANGE}Grafana docs for the topic: https://grafana.com/docs/auth/google"
+
+  read -p "Google OAuth Client ID: " google_oauth_client_id
+  read -p "Google OAuth Client Secret: " google_oauth_client_secret
+fi
+
+kctl create secret generic -n ${NAMESPACE} google-oauth --from-literal=client_id=${google_oauth_client_id} --from-literal=client_secret=${google_oauth_client_secret} --from-literal=cookiesecret=$(python -c 'import os,base64; print base64.b64encode(os.urandom(16))')
+kctl apply -f assets/oauth-proxy/oauth2-proxy.yaml
+
+read -p " What Contiamo ENV. are we on [dev/stg/prod/tracker]? " contiamo_env
+kctl apply -f assets/contiamo_${contiamo_env}
+
+##############################################################
+echo -e "${GREEN}All done."
+

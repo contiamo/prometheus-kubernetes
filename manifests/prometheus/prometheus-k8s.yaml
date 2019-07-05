@@ -20,6 +20,12 @@ spec:
   serviceMonitorSelector:
     matchExpressions:
     - {key: k8s-app, operator: Exists}
+  serviceMonitorNamespaceSelector:
+    matchExpressions:
+    - {key: prometheus-monitoring, operator: In, values: ["enabled"]}
+  ruleNamespaceSelector:
+    matchExpressions:
+    - {key: prometheus-monitoring, operator: In, values: ["enabled"]}
   ruleSelector:
     matchLabels:
       role: alert-rules
@@ -30,6 +36,10 @@ spec:
     requests:
       memory: PROMETHEUS_MEMORY_REQUEST
   retention: PROMETHEUS_STORAGE_RETENTION
+  securityContext:
+    fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
   storage:
     class: STORAGE_CLASS_TYPE
     selector:

@@ -17,6 +17,9 @@ spec:
       containers:
       - image: grafana/grafana:GRAFANA_VERSION
         name: grafana
+        env:
+        - name: GF_PATHS_CONFIG
+          value: /custom-config/grafana.ini
         ports:
         - containerPort: 3000
           name: http
@@ -28,6 +31,8 @@ spec:
             cpu: 100m
             memory: 100Mi
         volumeMounts:
+        - mountPath: /custom-config
+          name: grafana-config
         - mountPath: /var/lib/grafana
           subPath: grafana
           name: grafana-storage
@@ -67,21 +72,6 @@ spec:
           readOnly: false
         - mountPath: /grafana-dashboard-definitions/0/k8s-cluster-usage
           name: grafana-dashboard-k8s-cluster-usage
-          readOnly: false
-        - mountPath: /grafana-dashboard-definitions/0/grafana-nginx
-          name: grafana-nginx
-          readOnly: false
-        - mountPath: /grafana-dashboard-definitions/0/grafana-dashboard-idp
-          name: grafana-dashboard-idp
-          readOnly: false
-        - mountPath: /grafana-dashboard-definitions/0/grafana-dashboard-pantheon
-          name: grafana-dashboard-pantheon
-          readOnly: false
-        - mountPath: /grafana-dashboard-definitions/0/grafana-dashboard-go-processes
-          name: grafana-dashboard-go-processes
-          readOnly: false
-        - mountPath: /grafana-dashboard-definitions/0/grafana-datastore-queue
-          name: grafana-datastore-queue
           readOnly: false
       securityContext:
         runAsNonRoot: true
@@ -128,19 +118,7 @@ spec:
       - configMap:
           name: grafana-dashboard-k8s-cluster-usage
         name: grafana-dashboard-k8s-cluster-usage
-      - configMap:
-          name: grafana-nginx
-        name: grafana-nginx
-      - configMap:
-          name: grafana-dashboard-idp
-        name: grafana-dashboard-idp
-      - configMap:
-          name: grafana-dashboard-pantheon
-        name: grafana-dashboard-pantheon
-      - configMap:
-          name: grafana-dashboard-go-processes
-        name: grafana-dashboard-go-processes
-      - configMap:
-          name: grafana-datastore-queue
-        name: grafana-datastore-queue
-
+      - name: grafana-config
+        secret:
+          defaultMode: 420
+          secretName: grafana-config
