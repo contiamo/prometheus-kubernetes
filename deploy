@@ -480,7 +480,7 @@ if [[ $install_ingresses == "N" ]] || [[ $install_ingresses == "n" ]]; then
   exit 0
 fi
 
-if [[ GOOGLE_AUTH != "yes" ]]; then
+if [[ ${GOOGLE_AUTH} != "yes" ]]; then
   echo -e "${ORANGE}Go here to setup Google OAuth: https://console.developers.google.com/apis/credentials"
   echo -e "${ORANGE}Grafana docs for the topic: https://grafana.com/docs/auth/google"
 
@@ -491,7 +491,7 @@ fi
 kctl create secret generic -n ${NAMESPACE} google-oauth --from-literal=client_id=${google_oauth_client_id} --from-literal=client_secret=${google_oauth_client_secret} --from-literal=cookiesecret=$(python -c 'import os,base64; print base64.b64encode(os.urandom(16))')
 kctl apply -f assets/oauth-proxy/oauth2-proxy.yaml
 
-read -p " What Contiamo ENV. are we on [dev/stg/prod]? " contiamo_env
+read -p " What Contiamo ENV. are we on [dev/stg/prod/tracker]? " contiamo_env
 kctl apply -f assets/contiamo_${contiamo_env}
 
 ##############################################################
