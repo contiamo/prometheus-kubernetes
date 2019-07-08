@@ -525,7 +525,17 @@ spec:
           than one hour to complete.
         runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobcompletion
       expr: |
-        kube_job_spec_completions{job="kube-state-metrics"} - kube_job_status_succeeded{job="kube-state-metrics"}  > 0
+        kube_job_spec_completions{job="kube-state-metrics"} - kube_job_status_succeeded{job="kube-state-metrics"} and kube_job_spec_completions{job_name!~".*cassandra-schema"} > 0
+      for: 1h
+      labels:
+        severity: warning
+    - alert: CassandraSchemaJob
+      annotations:
+        message: Job {{ $labels.namespace }}/{{ $labels.job_name }} is taking more
+          than one hour to complete. Consider recreating the job as described in the
+          runbook
+        runbook_url: https://github.com/contiamo/ops-docs/blob/master/documentation/operators-and-controllers/monitoring/runbook/jaeger.md#kubepodcrashlooping-due-to-keyspace--does-not-exist
+      expr: "kube_job_spec_completions{job_name=~\".*cassandra-schema\"} > 0 \n"
       for: 1h
       labels:
         severity: warning
