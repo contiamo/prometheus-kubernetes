@@ -391,10 +391,21 @@ spec:
           }}) is restarting {{ printf "%.2f" $value }} times / 5 minutes.
         runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepodcrashlooping
       expr: |
-        rate(kube_pod_container_status_restarts_total{job="kube-state-metrics"}[15m]) * 60 * 5 > 0
+        rate(kube_pod_container_status_restarts_total{job="kube-state-metrics"} and kube_pod_container_status_restarts_total{pod!~".*jaeger.*"}[15m]) * 60 * 5 > 0
       for: 1h
       labels:
         severity: critical
+    - alert: JaegerPodCrashLooping
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container
+          }}) is restarting {{ printf "%.2f" $value }} times / 5 minutes.
+        runbook_url: https://github.com/contiamo/ops-docs/blob/master/runbook/jaeger.md#jaegerpodcrashlooping-due-to-keyspace--does-not-exist
+      expr: |
+        rate(kube_pod_container_status_restarts_total{job="kube-state-metrics"} and kube_pod_container_status_restarts_total{pod=~".*jaeger.*"}[15m]) * 60 * 5 > 0
+      for: 1h
+      labels:
+        severity: critical
+
     - alert: KubePodNotReady
       annotations:
         message: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready
@@ -534,7 +545,7 @@ spec:
         message: Job {{ $labels.namespace }}/{{ $labels.job_name }} is taking more
           than one hour to complete. Consider recreating the job as described in the
           runbook
-        runbook_url: https://github.com/contiamo/ops-docs/blob/master/documentation/operators-and-controllers/monitoring/runbook/jaeger.md#kubepodcrashlooping-due-to-keyspace--does-not-exist
+        runbook_url: https://github.com/contiamo/ops-docs/blob/master/runbook/jaeger.md#kubepodcrashlooping-due-to-keyspace--does-not-exist
       expr: "kube_job_spec_completions{job_name=~\".*cassandra-schema\"} > 0 \n"
       for: 1h
       labels:
