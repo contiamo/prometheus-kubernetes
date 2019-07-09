@@ -535,7 +535,7 @@ spec:
         message: Job {{ $labels.namespace }}/{{ $labels.job_name }} is taking more
           than one hour to complete. Consider recreating the job as described in the
           runbook
-        runbook_url: https://github.com/contiamo/ops-docs/blob/master/runbook/jaeger.md#kubepodcrashlooping-due-to-keyspace--does-not-exist
+        runbook_url: https://github.com/contiamo/ops-docs/blob/master/runbook/jaeger.md#cassandraschemajob
       expr: "kube_job_spec_completions{job_name=~\".*cassandra-schema\"} > 0 \n"
       for: 1h
       labels:
