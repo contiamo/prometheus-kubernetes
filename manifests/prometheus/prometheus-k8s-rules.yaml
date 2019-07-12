@@ -395,6 +395,7 @@ spec:
       for: 1h
       labels:
         severity: critical
+
     - alert: KubePodNotReady
       annotations:
         message: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready
@@ -525,7 +526,17 @@ spec:
           than one hour to complete.
         runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobcompletion
       expr: |
-        kube_job_spec_completions{job="kube-state-metrics"} - kube_job_status_succeeded{job="kube-state-metrics"}  > 0
+        kube_job_spec_completions{job_name!~".*cassandra-schema"} -  kube_job_status_succeeded{job_name!~".*cassandra-schema"}  > 0
+      for: 1h
+      labels:
+        severity: warning
+    - alert: CassandraSchemaJob
+      annotations:
+        message: Job {{ $labels.namespace }}/{{ $labels.job_name }} is taking more
+          than one hour to complete. Consider recreating the job as described in the
+          runbook
+        runbook_url: https://github.com/contiamo/ops-docs/blob/master/runbook/jaeger.md#cassandraschemajob
+      expr: "kube_job_spec_completions{job_name=~\".*cassandra-schema\"} > 0 \n"
       for: 1h
       labels:
         severity: warning
@@ -609,13 +620,13 @@ spec:
         severity: warning
     - alert: CPUThrottlingHigh
       annotations:
-        message: '{{ printf "%0.0f" $value }}% throttling of CPU in namespace {{ $labels.namespace
-          }} for container {{ $labels.container_name }} in pod {{ $labels.pod_name
+        message: '{{ printf "%0.0f" $value }}% throttling of CPU in namespace `{{ $labels.namespace
+          }}` for container {{ $labels.container_name }} in pod {{ $labels.pod_name
           }}.'
         runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-cputhrottlinghigh
       expr: "100 * sum(increase(container_cpu_cfs_throttled_periods_total{container_name!=\"\",
         }[5m])) by (container_name, pod_name, namespace)\n  /\nsum(increase(container_cpu_cfs_periods_total{}[5m]))
-        by (container_name, pod_name, namespace)\n  > 25 \n"
+        by (container_name, pod_name, namespace)\n  > 90 \n"
       for: 15m
       labels:
         severity: warning
