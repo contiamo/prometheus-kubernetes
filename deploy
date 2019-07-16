@@ -1,5 +1,18 @@
 #!/bin/bash
 
+if [[ -z $1 ]]; then
+  SILENT="NO"
+fi
+
+if [[ $1 == "--silent" ]]; then
+  SILENT="YES"
+fi
+
+ask(){
+if [[ $SILENT == "NO" ]]; then
+  read -p "${1}" "${2}"
+fi
+}
 #########################################################################################
 #components default version
 #########################################################################################
@@ -45,16 +58,19 @@ if [ "$(git status -s)" != "" ]; then
   echo -e "${RED}WARNING! ${WHITE}You have uncommitted changes! Please commit your changes now, then press ENTER"
   tput sgr0
   git status -s
-  read -p " [ENTER]: " next
+  ask " [ENTER]: " next
 else
   echo -e "${GREEN}OK! ${WHITE}No uncommitted changes detected"
   tput sgr0
 fi
 
 #Namespace
-read -p "Enter desired namespace to deploy prometheus [$DEFAULT_NAMESPACE]: " NAMESPACE
+# read -p "Enter desired namespace to deploy prometheus [$DEFAULT_NAMESPACE]: " NAMESPACE
+ask "Enter desired namespace to deploy prometheus [$DEFAULT_NAMESPACE]: " NAMESPACE
 NAMESPACE=${NAMESPACE:-$DEFAULT_NAMESPACE}
 tput sgr0
+echo $NAMESPACE
+
 
 echo -e "${BLUE}Creating ${ORANGE}${NAMESPACE} ${BLUE}namespace."
 kubectl create namespace "$NAMESPACE"
@@ -92,7 +108,7 @@ do
             #RBAC in GKE
             echo -e "${BLUE}Are you deploying in Google Container Engine (GKE)?"
             tput sgr0
-            read -p "Y/N [N]: " use_gke
+            ask "Y/N [N]: " use_gke
             if [[ $use_gke =~ ^([yY][eE][sS]|[yY])$ ]]; then
               echo "Grant cluster-admin permissions to your current identity"
               echo "Remove rules for self hosted clusters"
@@ -111,7 +127,7 @@ do
             STORAGE_CLASS_TYPE=Managed
             echo -e "${BLUE}Are you deploying in Azure Container Engine (AKS)?"
             tput sgr0
-            read -p "Y/N [N]: " use_aks
+            ask "Y/N [N]: " use_aks
             if [[ $use_aks =~ ^([yY][eE][sS]|[yY])$ ]]; then
               echo "Remove rules for self hosted clusters"
               echo
@@ -139,64 +155,64 @@ echo -e "${ORANGE}Setting component versions"
 tput sgr0
 
 #Prometheus Operator
-read -p "Enter Prometheus Operator version [$PROMETHEUS_OPERATOR_DEFAULT_VERSION]: " PROMETHEUS_OPERATOR_VERSION
+ask "Enter Prometheus Operator version [$PROMETHEUS_OPERATOR_DEFAULT_VERSION]: " PROMETHEUS_OPERATOR_VERSION
 PROMETHEUS_OPERATOR_VERSION=${PROMETHEUS_OPERATOR_VERSION:-$PROMETHEUS_OPERATOR_DEFAULT_VERSION}
 
 #Prometheus
 echo
-read -p "Enter Prometheus version [$PROMETHEUS_DEFAULT_VERSION]: " PROMETHEUS_VERSION
+ask "Enter Prometheus version [$PROMETHEUS_DEFAULT_VERSION]: " PROMETHEUS_VERSION
 PROMETHEUS_VERSION=${PROMETHEUS_VERSION:-$PROMETHEUS_DEFAULT_VERSION}
 
 #Prometheus Storage Retention
 echo
-read -p "Enter Prometheus storage retention period in hours [$PROMETHEUS_STORAGE_DEFAULT_RETENTION]: " PROMETHEUS_STORAGE_RETENTION
+ask "Enter Prometheus storage retention period in hours [$PROMETHEUS_STORAGE_DEFAULT_RETENTION]: " PROMETHEUS_STORAGE_RETENTION
 PROMETHEUS_STORAGE_RETENTION=${PROMETHEUS_STORAGE_RETENTION:-$PROMETHEUS_STORAGE_DEFAULT_RETENTION}
 
 #Prometheus Storage Volume Size
 echo
-read -p "Enter Prometheus storage volume size [$PROMETHEUS_STORAGE_DEFAULT_VOLUME_SIZE]: " PROMETHEUS_STORAGE_VOLUME_SIZE
+ask "Enter Prometheus storage volume size [$PROMETHEUS_STORAGE_DEFAULT_VOLUME_SIZE]: " PROMETHEUS_STORAGE_VOLUME_SIZE
 PROMETHEUS_STORAGE_VOLUME_SIZE=${PROMETHEUS_STORAGE_VOLUME_SIZE:-$PROMETHEUS_STORAGE_DEFAULT_VOLUME_SIZE}
 
 #Prometheus Memory Request
 echo
-read -p "Enter Prometheus memory request in Gi or Mi [$PROMETHEUS_DEFAULT_MEMORY_REQUEST]: " PROMETHEUS_MEMORY_REQUEST
+ask "Enter Prometheus memory request in Gi or Mi [$PROMETHEUS_DEFAULT_MEMORY_REQUEST]: " PROMETHEUS_MEMORY_REQUEST
 PROMETHEUS_MEMORY_REQUEST=${PROMETHEUS_MEMORY_REQUEST:-$PROMETHEUS_DEFAULT_MEMORY_REQUEST}
 
 #Grafana
 echo
-read -p "Enter Grafana version [$GRAFANA_DEFAULT_VERSION]: " GRAFANA_VERSION
+ask "Enter Grafana version [$GRAFANA_DEFAULT_VERSION]: " GRAFANA_VERSION
 GRAFANA_VERSION=${GRAFANA_VERSION:-$GRAFANA_DEFAULT_VERSION}
 
 #Alertmanager
 echo
-read -p "Enter Alert Manager version [$ALERTMANAGER_DEFAULT_VERSION]: " ALERTMANAGER_VERSION
+ask "Enter Alert Manager version [$ALERTMANAGER_DEFAULT_VERSION]: " ALERTMANAGER_VERSION
 ALERTMANAGER_VERSION=${ALERTMANAGER_VERSION:-$ALERTMANAGER_DEFAULT_VERSION}
 
 #Node Exporter
 echo
-read -p "Enter Node Exporter version [$NODE_EXPORTER_DEFAULT_VERSION]: " NODE_EXPORTER_VERSION
+ask "Enter Node Exporter version [$NODE_EXPORTER_DEFAULT_VERSION]: " NODE_EXPORTER_VERSION
 NODE_EXPORTER_VERSION=${NODE_EXPORTER_VERSION:-$NODE_EXPORTER_DEFAULT_VERSION}
 
 #Kube State Metrics
 echo
-read -p "Enter Kube State Metrics version [$KUBE_STATE_METRICS_DEFAULT_VERSION]: " KUBE_STATE_METRICS_VERSION
+ask "Enter Kube State Metrics version [$KUBE_STATE_METRICS_DEFAULT_VERSION]: " KUBE_STATE_METRICS_VERSION
 KUBE_STATE_METRICS_VERSION=${KUBE_STATE_METRICS_VERSION:-$KUBE_STATE_METRICS_DEFAULT_VERSION}
 
 #Prometheus External URL
 echo
-read -p "Enter Prometheus external Url [$PROMETHEUS_DEFAULT_EXTERNAL_URL]: " PROMETHEUS_EXTERNAL_URL
+ask "Enter Prometheus external Url [$PROMETHEUS_DEFAULT_EXTERNAL_URL]: " PROMETHEUS_EXTERNAL_URL
 PROMETHEUS_EXTERNAL_URL=${PROMETHEUS_EXTERNAL_URL:-$PROMETHEUS_DEFAULT_EXTERNAL_URL}
 
 #Alertmanager External URL
 echo
-read -p "Enter Alertmanager external Url [$ALERTMANAGER_DEFAULT_EXTERNAL_URL]: " ALERTMANAGER_EXTERNAL_URL
+ask "Enter Alertmanager external Url [$ALERTMANAGER_DEFAULT_EXTERNAL_URL]: " ALERTMANAGER_EXTERNAL_URL
 ALERTMANAGER_EXTERNAL_URL=${ALERTMANAGER_EXTERNAL_URL:-$ALERTMANAGER_DEFAULT_EXTERNAL_URL}
 
 #Dedicated nodes?
 echo
 echo -e "${ORANGE}Do you want to use ${WHITE}NodeSelector ${ORANGE} to assign monitoring components on dedicated nodes?"
 tput sgr0
-read -p "Y/N [N]: " use_dedicated_nodes
+ask "Y/N [N]: " use_dedicated_nodes
 
 #if so, fill out this form...
 if [[ $use_dedicated_nodes =~ ^([yY][eE][sS]|[yY])$ ]]; then
@@ -279,7 +295,7 @@ sed -i -e 's,ALERTMANAGER_EXTERNAL_URL,'"$ALERTMANAGER_EXTERNAL_URL"',g' manifes
 echo
 echo -e "${BLUE}Do you want to set up an SMTP relay?"
 tput sgr0
-read -p "Y/N [N]: " use_smtp
+ask "Y/N [N]: " use_smtp
 
 #if so, fill out this form...
 if [[ $use_smtp =~ ^([yY][eE][sS]|[yY])$ ]]; then
@@ -315,7 +331,7 @@ fi
 echo
 echo -e "${BLUE}Do you want to set up slack alerts?"
 tput sgr0
-read -p "Y/N [N]: " use_slack
+ask "Y/N [N]: " use_slack
 
 #if so, fill out this form...
 if [[ $use_slack =~ ^([yY][eE][sS]|[yY])$ ]]; then
@@ -332,7 +348,7 @@ fi
 echo
 echo -e "${BLUE}Do you want to set up Google OAuth for Grafana?"
 tput sgr0
-read -p "Y/N [N]: " use_googleauth_grafana
+ask "Y/N [N]: " use_googleauth_grafana
 
 #if so, fill in this form...
 if [[ $use_googleauth_grafana =~ ^([yY][eE][sS]|[yY])$ ]]; then
@@ -458,7 +474,7 @@ tput sgr0
 echo
 echo -e "${BLUE}Shall we install Loki?"
 tput sgr0
-read -p "Y/N [Y]: " install_loki
+ask "Y/N [Y]: " install_loki
 
 #if so, fill in this form...
 if [[ $install_loki != "N" ]] && [[ $install_loki != "n" ]]; then
@@ -475,7 +491,7 @@ tput sgr0
 read -p "Y/N [Y]: " install_ingresses
 
 #if so, fill in this form...
-if [[ $install_ingresses == "N" ]] || [[ $install_ingresses == "n" ]]; then
+if [[ $install_ingresses == "N" ]] || [[ $install_ingresses == "n" ]] || [[ $SILENT == "YES" ]]; then
   echo -e "${GREEN}All done."
   exit 0
 fi
