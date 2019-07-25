@@ -20290,7 +20290,7 @@ items:
             "steppedLine": false,
             "targets": [
               {
-                "expr": "jvm_buffer_pool_capacity_bytes{service=\"pantheon-api\",namespace=\"[[namespace]]\"}",
+                "expr": "jvm_buffer_pool_capacity_bytes{service=\"pantheon\",namespace=\"[[namespace]]\"}",
                 "format": "time_series",
                 "hide": false,
                 "intervalFactor": 1,
@@ -20298,7 +20298,7 @@ items:
                 "refId": "A"
               },
               {
-                "expr": "jvm_buffer_pool_used_bytes{service=\"pantheon-api\",namespace=\"[[namespace]]\"}",
+                "expr": "jvm_buffer_pool_used_bytes{service=\"pantheon\",namespace=\"[[namespace]]\"}",
                 "format": "time_series",
                 "hide": false,
                 "intervalFactor": 1,
@@ -20385,7 +20385,7 @@ items:
             "steppedLine": false,
             "targets": [
               {
-                "expr": "jvm_memory_bytes_committed{service=\"pantheon-api\",namespace=\"$namespace\"}",
+                "expr": "jvm_memory_bytes_committed{service=\"pantheon\",namespace=\"$namespace\"}",
                 "format": "time_series",
                 "intervalFactor": 1,
                 "legendFormat": "Area: {{area}}, Pod: {{pod}}",
@@ -20471,7 +20471,7 @@ items:
             "steppedLine": false,
             "targets": [
               {
-                "expr": "jvm_gc_collection_seconds_count{service=\"pantheon-api\",namespace=\"$namespace\"}",
+                "expr": "jvm_gc_collection_seconds_count{service=\"pantheon\",namespace=\"$namespace\"}",
                 "format": "time_series",
                 "intervalFactor": 1,
                 "legendFormat": "GC: {{gc}}",
@@ -20557,7 +20557,7 @@ items:
             "steppedLine": false,
             "targets": [
               {
-                "expr": "jvm_threads_current{service=\"pantheon-api\",namespace=\"[[namespace]]\"}",
+                "expr": "jvm_threads_current{service=\"pantheon\",namespace=\"[[namespace]]\"}",
                 "format": "time_series",
                 "hide": false,
                 "intervalFactor": 1,
@@ -20565,14 +20565,14 @@ items:
                 "refId": "A"
               },
               {
-                "expr": "jvm_threads_deadlocked_monitor{service=\"pantheon-api\",namespace=\"[[namespace]]\"}",
+                "expr": "jvm_threads_deadlocked_monitor{service=\"pantheon\",namespace=\"[[namespace]]\"}",
                 "format": "time_series",
                 "intervalFactor": 1,
                 "legendFormat": "Deadlocked. Pod: {{pod}}",
                 "refId": "B"
               },
               {
-                "expr": "jvm_threads_daemon{service=\"pantheon-api\",namespace=\"[[namespace]]\"}",
+                "expr": "jvm_threads_daemon{service=\"pantheon\",namespace=\"[[namespace]]\"}",
                 "format": "time_series",
                 "intervalFactor": 1,
                 "legendFormat": "Daemon. Pod: {{pod}}",
@@ -20658,7 +20658,7 @@ items:
             "steppedLine": false,
             "targets": [
               {
-                "expr": "jvm_memory_bytes_used{service=\"pantheon-api\",namespace=\"$namespace\"}",
+                "expr": "jvm_memory_bytes_used{service=\"pantheon\",namespace=\"$namespace\"}",
                 "format": "time_series",
                 "intervalFactor": 1,
                 "legendFormat": "Area: {{area}}",
@@ -20744,7 +20744,7 @@ items:
             "steppedLine": false,
             "targets": [
               {
-                "expr": "jvm_memory_pool_bytes_used{service=\"pantheon-api\",namespace=\"$namespace\"}",
+                "expr": "jvm_memory_pool_bytes_used{service=\"pantheon\",namespace=\"$namespace\"}",
                 "format": "time_series",
                 "intervalFactor": 1,
                 "legendFormat": "Mem. Used - Pool: {{pool}}",
