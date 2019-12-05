@@ -479,6 +479,8 @@ ask "Y/N [Y]: " install_loki
 #if so, fill in this form...
 if [[ $install_loki != "N" ]] && [[ $install_loki != "n" ]]; then
   LOKI='yes'
+  helm repo add loki https://grafana.github.io/loki/charts
+  helm repo update
   echo helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}
   helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}
 fi
