@@ -87,7 +87,7 @@ kctl() {
 #Cloud Provider
 PS3="${GREEN_PS3}Please select your cloud provider:"
 
-options=("AWS" "GCP" "Azure" "Custom")
+options=("AWS" "GCP" "Azure" "Custom" "K3S")
 select opt in "${options[@]}"
 do
     tput sgr0
@@ -123,7 +123,7 @@ do
             ;;
         "Azure")
             echo "Deploying on Azure"
-            STORAGE_CLASS_PROVISIONER=kubernetes.io/azure-disk
+            STORAGE_CLASS_PROVISIONER=rancher.io/local-path
             STORAGE_CLASS_TYPE=Managed
             echo -e "${BLUE}Are you deploying in Azure Container Engine (AKS)?"
             tput sgr0
@@ -135,6 +135,14 @@ do
             sed -i -e 's,type,'kind',g' manifests/prometheus/prometheus-k8s.yaml;
             sed -i -e 's,STORAGE_CLASS_PROVISIONER,'"$STORAGE_CLASS_PROVISIONER"',g' manifests/prometheus/prometheus-k8s.yaml;
             sed -i -e 's,STORAGE_CLASS_TYPE,'"$STORAGE_CLASS_TYPE"',g' manifests/prometheus/prometheus-k8s.yaml;
+            break
+            ;;
+        "K3S")
+            echo "Deploying on Rancher's K3S"
+            sed -i -e '1,8d;32,45d' manifests/prometheus/prometheus-k8s.yaml;
+            STORAGE_CLASS_TYPE=local-path
+            sed -i -e 's,STORAGE_CLASS_TYPE,'"$STORAGE_CLASS_TYPE"',g' manifests/prometheus/prometheus-k8s.yaml;
+            sed -i -e 's,STORAGE_CLASS_TYPE,'"$STORAGE_CLASS_TYPE"',g' manifests/grafana/grafana.pvc.yaml;
             break
             ;;
         "Custom")
@@ -386,6 +394,11 @@ kubectl create clusterrolebinding kube-state-metrics-admin --clusterrole=cluster
 echo
 echo -e "${ORANGE}Deploying Prometheus Operator"
 tput sgr0
+
+if [[ $opt == "K3S" ]]; then 
+  kctl apply -f assets/k3s-specific/rbac.yaml
+fi
+
 kctl apply -f manifests/prometheus-operator
 
 printf "${ORANGE}Waiting for Operator to register custom resource definitions..."
@@ -514,4 +527,3 @@ kctl apply -f assets/contiamo_${contiamo_env}
 
 ##############################################################
 echo -e "${GREEN}All done."
-
