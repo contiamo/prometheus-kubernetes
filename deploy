@@ -397,6 +397,8 @@ tput sgr0
 
 if [[ $opt == "K3S" ]]; then 
   kctl apply -f assets/k3s-specific/rbac.yaml
+  git clone https://github.com/kubernetes-sigs/metrics-server.git
+  kubectl apply -f metrics-server/deploy/1.8+/
 fi
 
 kctl apply -f manifests/prometheus-operator
@@ -494,8 +496,17 @@ if [[ $install_loki != "N" ]] && [[ $install_loki != "n" ]]; then
   LOKI='yes'
   helm repo add loki https://grafana.github.io/loki/charts
   helm repo update
-  echo helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}
-  helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}
+  echo
+  echo -e "${BLUE}Shall we enable Jaeger for Loki?"
+  tput sgr0
+  ask "Y/N [Y]: " install_loki_with_jaeger
+  if [[ $install_loki_with_jaeger != "N" ]] && [[ $install_loki_with_jaeger != "n" ]]; then
+    loki_helm_command="helm upgrade --install loki loki/loki-stack --set loki.tracing.jaegerAgentHost=tracing-jaeger-agent --namespace ${NAMESPACE}"
+  else
+    loki_helm_command="helm upgrade --install loki loki/loki-stack --namespace ${NAMESPACE}"
+  fi 
+  echo ${loki_helm_command}
+  ${loki_helm_command}
 fi
 
 
