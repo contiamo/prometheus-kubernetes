@@ -819,7 +819,7 @@ spec:
           are out of sync.
       expr: |
         count_values("config_hash", alertmanager_config_hash{job="alertmanager-main",namespace="monitoring"}) BY (service) / ON(service) GROUP_LEFT() label_replace(prometheus_operator_spec_replicas{job="prometheus-operator",namespace="monitoring",controller="alertmanager"}, "service", "alertmanager-$1", "name", "(.*)") != 1
-      for: 5m
+      for: 15m
       labels:
         severity: critical
     - alert: AlertmanagerFailedReload
